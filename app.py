@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 from pymongo import MongoClient
 
@@ -19,5 +19,7 @@ class Device(BaseModel):
     temp: float
     online: bool
 
-
-# Your handlers go below this line.
+@app.get("/devices")
+def get_devices(response : Response):
+    response.headers["Cache-Control"] = "no-cache"
+    return list(devices.find({}, {"_id": 0}))
