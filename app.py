@@ -56,3 +56,28 @@ def create_device(device: Device, response : Response):
     new_device.pop("_id")
     response.headers["Location"] = f"/devices/{quote(device.name, safe='')}"
     return new_device
+
+@app.put("/devices/{name}")
+def update_device(name: str, device: Device, response: Response):
+
+    if device.name != name:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Body name '{device.name}' does not match URL name '{name}'.",
+        )
+        # returns 409 if name indicated in uri and body disagree
+        # it was chosen to return an error code instead of force agreement as the true intended name of the user is unknown.
+
+    result = devices.replace_one(
+        {"name": name}, device.model_dump(), upsert=True
+    )
+
+    if result.upserted_id is not None:
+        response.status_code = status.HTTP_201_CREATED
+        # returns 201 if put created the resource
+
+    return device # returns 200 if the resource was updated successfully
+
+    
+    
+    
