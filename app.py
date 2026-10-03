@@ -35,7 +35,7 @@ def get_single_device(name :str, response : Response):
     device = devices.find_one({"name": name}, {"_id": 0})
     if device is None:
         raise HTTPException(status_code=404, 
-                            detail="No device called " + name,
+                            detail=f"No device called '{name}'",
                             headers={"Cache-Control": "no-cache"})
 
     return device
@@ -68,8 +68,10 @@ def update_device(name: str, device: Device, response: Response):
         # returns 409 if name indicated in uri and body disagree
         # it was chosen to return an error code instead of force agreement as the true intended name of the user is unknown.
 
+    new_device = device.model_dump()
+
     result = devices.replace_one(
-        {"name": name}, device.model_dump(), upsert=True
+        {"name": name}, new_device, upsert=True
     )
 
     if result.upserted_id is not None:
@@ -77,6 +79,17 @@ def update_device(name: str, device: Device, response: Response):
         # returns 201 if put created the resource
 
     return device # returns 200 if the resource was updated successfully
+
+
+@app.delete("/devices/{name}")
+def delete_device(name : str):
+    result = devices.delete_one({"name": name})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, 
+                                    detail=f"No device called '{name}'")
+
+    return {"detail" : f"The device named {name} has been deleted."}
 
     
     
